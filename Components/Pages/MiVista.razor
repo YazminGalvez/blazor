@@ -1,0 +1,62 @@
+﻿@page "/MiVista"
+@using blazor.Components.Data
+@inject Servicios.ServicioControlador ServicioControlador
+@rendermode InteractiveServer
+
+
+<h3>Juegos</h3>
+
+<div class="form-check">
+    <input type="checkbox" id="filtro" @bind="VerSolamenteNoJugados" />
+    <label for="filtro">Ver solamente los no jugados</label>
+</div>
+
+<ul>
+    @foreach (var j in JuegosFiltrados)
+    {
+        <li>
+            @j.Nombre
+            @(j.Jugado ? "ya jugado" : "pendiente");
+            <input type="checkbox" checked="@j.Jugado" @onclick="() => CambiarJugado(j)" />
+        </li>
+    }
+</ul>
+
+<div>
+    <input @bind="newJuego.Nombre" placeholder="Nuevo Juego" />
+    <button @onclick="AgregarJuego">AgregarJuego</button>
+</div>
+
+@code {
+    private List<Juego> juegos = new();
+    private Juego newJuego = new();
+
+    private bool VerSolamenteNoJugados { get; set; } = false;
+
+    private IEnumerable<Juego> JuegosFiltrados =>
+        VerSolamenteNoJugados
+            ? juegos.Where(j => !j.Jugado)
+            : juegos;
+
+    private void CambiarJugado(Juego j)
+    {
+        Console.WriteLine("me cambiaron");
+        ServicioControlador.CambiarEstadoJugado(j);
+    }
+
+    private async Task AgregarJuego()
+    {
+        if (!string.IsNullOrWhiteSpace(newJuego.Nombre))
+        {
+            ServicioControlador.AgregarJuego(newJuego);
+            juegos = await ServicioControlador.ObtenerJuegos();
+            newJuego = new Juego();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        juegos = await ServicioControlador.ObtenerJuegos();
+
+    }
+}
